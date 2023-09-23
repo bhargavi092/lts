@@ -15,12 +15,18 @@ public class Leaves {
     private long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id",  referencedColumnName = "id", insertable = false, updatable = false)
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "approved_manager_id")
+    @JoinColumn(name = "approved_manager_id",  referencedColumnName = "id", insertable = false, updatable = false)
     private User approvedManager;
+
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "approved_manager_id")
+    private Long approvedManagerId;
 
     private String leaveStatus;
     private String leaveType;

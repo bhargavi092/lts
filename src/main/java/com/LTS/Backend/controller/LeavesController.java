@@ -1,5 +1,6 @@
 package com.LTS.Backend.controller;
 
+import com.LTS.Backend.dto.ReactToLeaveRequestDTO;
 import com.LTS.Backend.exception.CustomErrorResponse;
 import com.LTS.Backend.models.Leaves;
 import com.LTS.Backend.models.User;
@@ -27,8 +28,8 @@ public class LeavesController {
 
             User user = userRepository.findByEmail(email);
             if( user!= null){
-//                Long userId = user.getUserId();
-//                leave.setUser(user);
+                Long userId = user.getId();
+                leave.setUserId(userId);
                 Leaves appliedLeave = leavesService.applyLeave(leave);
                 return ResponseEntity.ok(appliedLeave);
             }
@@ -45,7 +46,7 @@ public class LeavesController {
 
     }
 
-    @PostMapping("/employee/track-leaves/{userId}")
+    @GetMapping("/employee/track-leaves/{userId}")
     public ResponseEntity<?> getAllUserLeaves(@PathVariable Long userId){
         try{
             List<Leaves> leaves = leavesService.getAllUserLeaves(userId);
@@ -76,20 +77,42 @@ public class LeavesController {
         }
     }
 
+    @GetMapping("/manager/overview")
     public ResponseEntity<?> getAllPastLeaves(){
-//        List<Leaves> pastLeaves = leavesService
-        return ;
+        List<Leaves> pastLeaves = leavesService.getAllNonPendingLeaves();
+        if(pastLeaves!=null){
+            return ResponseEntity.ok(pastLeaves);
+        }
+        else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No past leaves");
+        }
     }
 
+
+    @PostMapping("/manager/react-to-leave/{leaveId}")
     public ResponseEntity<?> reactToLeave(@PathVariable Long leaveId ,
-                                          @RequestParam String status,
-                                          @RequestParam String managerComment){
-        Leaves updatedLeave = leavesService.reactToLeaves(leaveId,status,managerComment);
+                                          @RequestBody ReactToLeaveRequestDTO reactToLeaveRequestDTO){
+
+        Leaves updatedLeave = leavesService.reactToLeaves(leaveId,
+                reactToLeaveRequestDTO.getManagerId(),reactToLeaveRequestDTO.getStatus(),
+                reactToLeaveRequestDTO.getManagerComments()
+        );
 
         if(updatedLeave!=null){
             return ResponseEntity.ok(updatedLeave);
         }
         else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PostMapping("/employee/delete-leave/{leaveId}")
+    public ResponseEntity<?> deletePendingLeave(@PathVariable Long leaveId) {
+        boolean isDeleted = leavesService.deletePendingLeave(leaveId);
+
+        if (isDeleted) {
+            return ResponseEntity.ok().build();
+        } else {
             return ResponseEntity.notFound().build();
         }
     }

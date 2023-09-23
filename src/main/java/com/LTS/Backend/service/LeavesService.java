@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -28,21 +29,32 @@ public class LeavesService {
     }
 
     public List<Leaves> getAllNonPendingLeaves(){
-        return  leavesRepository.findByLeaveStatus("");
+        return  leavesRepository.findByLeaveStatusIn(Arrays.asList("Accepted","Rejected"));
     }
 
-    public Leaves reactToLeaves(Long leaveId,String status , String managerComment){
+    public Leaves reactToLeaves(Long leaveId,Long managerId,String status , String managerComment){
         Leaves leave = leavesRepository.findById(leaveId).orElse(null);
 
         if(leave!=null && ("Accepted".equals(status)|| "Rejected".equals(status)) ){
             leave.setLeaveStatus(status);
+            leave.setApprovedManagerId(managerId);
             leave.setManagerComment(managerComment);
             return leavesRepository.save(leave);
         }
         else{
             return null;
         }
+    }
 
+    public Boolean deletePendingLeave(Long leaveId){
+        Leaves leave = leavesRepository.findById(leaveId).orElse(null);
 
+        if(leave!=null && ("Pending".equals(leave.getLeaveStatus()) )  ){
+            leavesRepository.delete(leave);
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 }
